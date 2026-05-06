@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromptVault • Quản Lý Prompt AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100">
+    <!-- Top Navigation Bar -->
+    <nav class="bg-zinc-900 border-b border-zinc-800 px-8 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-x-4">
+            <div class="flex items-center gap-x-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-2xl flex items-center justify-center">
+                    <i class="fa-solid fa-archive text-white text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tight">PromptVault</h1>
+                    <p class="text-xs text-zinc-400 -mt-1">AI Prompt Manager</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div id="statsBar" class="flex items-center gap-x-8 text-sm">
+            <div class="flex items-center gap-x-2">
+                <i class="fa-solid fa-folder text-cyan-400"></i>
+                <span id="totalPrompts">0</span>
+                <span class="text-zinc-400">prompts</span>
+            </div>
+            <div class="flex items-center gap-x-2">
+                <i class="fa-solid fa-star text-amber-400"></i>
+                <span id="totalFavorites">0</span>
+                <span class="text-zinc-400">yêu thích</span>
+            </div>
+            <div class="flex items-center gap-x-2">
+                <i class="fa-solid fa-chart-line text-emerald-400"></i>
+                <span id="totalUsage">0</span>
+                <span class="text-zinc-400">lượt dùng</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-x-3">
+            <button onclick="showStatsModal()" class="px-4 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-x-2">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span class="hidden md:inline">Thống kê</span>
+            </button>
+            <button onclick="importFromClipboard()" class="px-4 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-x-2">
+                <i class="fa-solid fa-paste"></i>
+                <span class="hidden md:inline">Dán JSON</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="flex h-[calc(100vh-65px)] overflow-hidden">
+        
+        <!-- Sidebar -->
+        <div class="w-72 bg-zinc-900 border-r border-zinc-800 flex flex-col">
+            <div class="p-6">
+                <button onclick="openCreateModal()" 
+                        class="w-full flex items-center justify-center gap-x-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3.5 rounded-3xl transition-all active:scale-[0.985]">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Tạo Prompt Mới</span>
+                </button>
+            </div>
+
+            <div class="px-3 flex-1 overflow-y-auto" id="sidebar-menu"></div>
+
+            <div class="p-4 border-t border-zinc-800">
+                <div class="text-xs text-zinc-400 px-3 mb-2">BỘ LỌC NHANH</div>
+                <div onclick="filterByUsage('most')" class="flex items-center gap-x-3 px-4 py-2.5 hover:bg-zinc-800 rounded-2xl cursor-pointer text-sm">
+                    <i class="fa-solid fa-fire text-orange-400 w-4"></i>
+                    <span>Dùng nhiều nhất</span>
+                </div>
+                <div onclick="filterByUsage('recent')" class="flex items-center gap-x-3 px-4 py-2.5 hover:bg-zinc-800 rounded-2xl cursor-pointer text-sm">
+                    <i class="fa-solid fa-clock text-blue-400 w-4"></i>
+                    <span>Dùng gần đây</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            
+            <!-- Toolbar -->
+            <div class="h-16 border-b border-zinc-800 bg-zinc-900 px-8 flex items-center justify-between">
+                <div class="flex items-center gap-x-4 flex-1">
+                    <div class="relative w-full max-w-md">
+                        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"></i>
+                        <input id="searchInput" type="text" placeholder="Tìm kiếm prompt... (Ctrl+K)" 
+                               oninput="filterPrompts()"
+                               class="w-full bg-zinc-800 border border-zinc-700 focus:border-cyan-400 rounded-3xl pl-11 py-3 text-sm outline-none">
+                    </div>
+                    
+                    <select id="sortSelect" onchange="filterPrompts()" class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 text-sm outline-none">
+                        <option value="updated">Mới cập nhật</option>
+                        <option value="usage">Dùng nhiều nhất</option>
+                        <option value="recent">Dùng gần đây</option>
+                        <option value="title">A → Z</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-x-3">
+                    <!-- View Toggle -->
+                    <div class="flex bg-zinc-800 rounded-3xl p-1">
+                        <button onclick="setViewMode('grid')" id="gridBtn"
+                                class="px-5 py-2 rounded-3xl flex items-center gap-x-2 text-sm font-medium bg-white text-zinc-900 shadow">
+                            <i class="fa-solid fa-th-large"></i>
+                        </button>
+                        <button onclick="setViewMode('list')" id="listBtn"
+                                class="px-5 py-2 rounded-3xl flex items-center gap-x-2 text-sm font-medium">
+                            <i class="fa-solid fa-list-ul"></i>
+                        </button>
+                    </div>
+
+                    <!-- Bulk Actions -->
+                    <div id="bulkToolbar" class="hidden items-center gap-x-2 bg-zinc-800 rounded-3xl px-3 py-1">
+                        <span id="selectedCount" class="text-sm px-3 text-cyan-400 font-medium"></span>
+                        <button onclick="bulkFavorite()" class="px-4 py-1.5 hover:bg-zinc-700 rounded-2xl text-sm flex items-center gap-x-1">
+                            <i class="fa-solid fa-star"></i>
+                        </button>
+                        <button onclick="bulkDelete()" class="px-4 py-1.5 hover:bg-zinc-700 rounded-2xl text-sm flex items-center gap-x-1 text-red-400">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                        <button onclick="clearBulkSelection()" class="px-4 py-1.5 hover:bg-zinc-700 rounded-2xl text-sm">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex-1 overflow-auto p-8" id="contentArea">
+                <div id="gridView" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6"></div>
+                <div id="listView" class="hidden space-y-3"></div>
+                
+                <div id="emptyState" class="hidden flex flex-col items-center justify-center h-[420px]">
+                    <i class="fa-solid fa-folder-open text-7xl text-zinc-600 mb-6"></i>
+                    <p class="text-2xl font-semibold text-zinc-300">Không tìm thấy prompt nào</p>
+                    <p class="text-zinc-400 mt-3">Thử thay đổi từ khóa hoặc tạo prompt mới</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals will be injected by JS -->
+
+    <script src="js/app.js"></script>
+    <script src="js/promptManager.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/dragDrop.js"></script>
+    <script src="js/keyboard.js"></script>
+    <script src="js/variables.js"></script>
+    <script src="js/bulk.js"></script>
+    <script src="js/stats.js"></script>
+</body>
+</html>

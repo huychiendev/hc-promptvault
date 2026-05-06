@@ -1,0 +1,72 @@
+/* PromptVault - Custom Styles */
+:root {
+    --primary: #06b6d4;
+}
+
+.prompt-card {
+    transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+    position: relative;
+}
+
+.prompt-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.grip-handle {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    cursor: grab;
+    z-index: 20;
+    opacity: 0.5;
+    transition: all 0.2s;
+}
+
+.prompt-card:hover .grip-handle {
+    opacity: 1;
+}
+
+.grip-handle:active {
+    cursor: grabbing;
+}
+
+.drag-over {
+    box-shadow: 0 0 0 3px #22d3ee !important;
+    transform: scale(1.015) !important;
+}
+
+.modal {
+    animation: modalPop 0.25s ease-out;
+}
+
+@keyframes modalPop {
+    from { transform: scale(0.92); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.toast {
+    animation: toastSlide 0.3s ease-out forwards;
+}
+
+@keyframes toastSlide {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.variable-pill {
+    background: #164e63;
+    color: #67e8f9;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.version-item {
+    transition: all 0.1s;
+}
+
+.version-item:hover {
+    background-color: #27272a;
+}
