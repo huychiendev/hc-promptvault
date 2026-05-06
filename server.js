@@ -57,6 +57,16 @@ app.post('/api/prompts/sync', async (req, res) => {
     const client = await pool.connect();
     try {
         const prompts = req.body;
+        
+        // --- FIX LOOP OVERWRITE ---
+        // If the incoming data is exactly the 2 hardcoded items from the old browser tab,
+        // ignore it so we don't destroy the newly seeded 13 items!
+        if (prompts && prompts.length === 2 && prompts[0].id === 1 && prompts[1].id === 2) {
+            console.log('Blocked auto-sync from old browser tab to protect seeded data.');
+            return res.json({ success: true, message: 'Ignored stale data' });
+        }
+        // --------------------------
+
         await client.query('BEGIN');
         await client.query('TRUNCATE TABLE prompts RESTART IDENTITY');
         

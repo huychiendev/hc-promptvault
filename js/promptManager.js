@@ -67,7 +67,7 @@ function toggleFavorite(id) {
 }
 
 function incrementUsage(id) {
-    const p = prompts.find(x => p.id === id);
+    const p = prompts.find(x => x.id === id);
     if (!p) return;
     p.usageCount = (p.usageCount || 0) + 1;
     p.lastUsed = new Date().toISOString();

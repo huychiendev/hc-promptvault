@@ -60,7 +60,7 @@ function showStatsModal() {
                 <div>
                     <div class="text-sm font-bold text-zinc-400 mb-4">TOP 5 PROMPT DÙNG NHIỀU NHẤT</div>
                     <div class="bg-zinc-800 rounded-3xl p-6 space-y-4 max-h-[320px] overflow-auto">
-                        ${prompts.sort((a,b) => (b.usageCount||0) - (a.usageCount||0)).slice(0,5).map((p,i) => `
+                        ${[...prompts].sort((a,b) => (b.usageCount||0) - (a.usageCount||0)).slice(0,5).map((p,i) => `
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-x-3">
                                     <span class="text-xs w-5 text-center">${i+1}</span>

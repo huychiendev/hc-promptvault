@@ -6,8 +6,10 @@ function extractVariables(content) {
     let match;
     while ((match = regex.exec(content)) !== null) {
         const raw = match[1].trim();
-        const [name, hint] = raw.split(':').map(s => s.trim());
-        vars.push({ name, hint: hint || `Giá trị cho ${name}` });
+        const parts = raw.split(':');
+        const name = parts[0].trim();
+        const hint = parts.length > 1 ? parts.slice(1).join(':').trim() : `Giá trị cho ${name}`;
+        vars.push({ name, hint });
     }
     return vars;
 }
@@ -91,6 +93,8 @@ function copyTestedPrompt(id, btn) {
     navigator.clipboard.writeText(text).then(() => {
         btn.innerHTML = `<i class="fa-solid fa-check"></i> Đã sao chép!`;
         incrementUsage(id);
+        filterPrompts();
+        updateStatsBar();
         setTimeout(() => modal.remove(), 800);
     });
 }

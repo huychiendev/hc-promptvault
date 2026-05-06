@@ -12,18 +12,18 @@ let selectedPrompts = new Set();
 let undoStack = [];
 let redoStack = [];
 
-// Global state for current filter
-let currentFilter = { type: 'all' };
+
+let searchTimeout;
+function debounceSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        filterPrompts();
+    }, 300);
+}
 
 async function initApp() {
     await loadData();
-    // Các hàm render đã được gọi trong loadData nếu fetch API thành công,
-    // hoặc loadInitialSamples/LocalStorage.
-    // Tuy nhiên gọi lại ở đây để chắc chắn:
-    renderSidebar();
-    filterPrompts();
     initKeyboardShortcuts();
-    updateStatsBar();
     
     // Set default view
     document.getElementById('gridBtn').classList.add('bg-white', 'text-zinc-900', 'shadow');
@@ -70,35 +70,7 @@ async function loadData() {
 }
 
 function loadInitialSamples() {
-    prompts = [
-        {
-            id: 1,
-            title: "Military Style - Trực tiếp ngắn gọn",
-            category: "Skill AI",
-            content: "Military style. Direct. No preamble. No filler. Facts only.\nFormat: [problem] → [cause] → [fix].\nCode unchanged. Technical terms intact.",
-            description: "Phong cách quân đội: ngắn gọn, trực tiếp, tiết kiệm 65-75% token",
-            tags: ["military", "tiết kiệm token", "dev"],
-            isFavorite: true,
-            usageCount: 47,
-            lastUsed: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            versions: [],
-            updatedAt: new Date().toISOString()
-        },
-        {
-            id: 2,
-            title: "Feynman - Giải thích như dạy trẻ 12 tuổi",
-            category: "Skill AI",
-            content: "Use the Feynman technique. Explain to a curious 12-year-old with no CS background.\nNo jargon without immediate plain-English definition.",
-            description: "Giải thích đơn giản, xây dựng trực giác trước khi đi sâu",
-            tags: ["feynman", "học", "giải thích"],
-            isFavorite: false,
-            usageCount: 32,
-            lastUsed: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-            versions: [],
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString()
-        }
-    ];
-    saveToLocalStorage();
+    prompts = [];
     renderSidebar();
     filterPrompts();
     updateStatsBar();

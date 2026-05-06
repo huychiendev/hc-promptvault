@@ -107,6 +107,11 @@ async function seed() {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
+        
+        // Clean table first
+        await client.query('DELETE FROM prompts');
+        console.log('Đã xoá toàn bộ dữ liệu cũ (clean DB)');
+
         for (const p of promptsToInsert) {
             // Check if already exists to avoid duplicates
             const check = await client.query('SELECT id FROM prompts WHERE title = $1', [p.title]);

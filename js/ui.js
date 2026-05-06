@@ -142,7 +142,7 @@ function renderPrompts(filtered) {
                 
                 <div class="flex items-center gap-x-3 text-zinc-400">
                     <button onclick="event.stopImmediatePropagation(); editPrompt(${p.id})"><i class="fa-solid fa-edit"></i></button>
-                    <button onclick="event.stopImmediatePropagation(); deletePrompt(${p.id}); filterPrompts()"><i class="fa-solid fa-trash"></i></button>
+                    <button onclick="event.stopImmediatePropagation(); if(confirm('Bạn có chắc muốn xóa prompt này?')) { deletePrompt(${p.id}); filterPrompts(); }"><i class="fa-solid fa-trash"></i></button>
                     <button onclick="event.stopImmediatePropagation(); exportSinglePrompt(${p.id})"><i class="fa-solid fa-download"></i></button>
                 </div>
             </div>
@@ -185,7 +185,7 @@ function renderPrompts(filtered) {
                 </div>
                 
                 <button onclick="event.stopImmediatePropagation(); editPrompt(${p.id})" class="text-zinc-400 hover:text-white"><i class="fa-solid fa-edit"></i></button>
-                <button onclick="event.stopImmediatePropagation(); deletePrompt(${p.id}); filterPrompts()" class="text-zinc-400 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="event.stopImmediatePropagation(); if(confirm('Bạn có chắc muốn xóa prompt này?')) { deletePrompt(${p.id}); filterPrompts(); }" class="text-zinc-400 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
                 <button onclick="event.stopImmediatePropagation(); exportSinglePrompt(${p.id})" class="text-zinc-400 hover:text-white"><i class="fa-solid fa-download"></i></button>
             </div>
         `;
@@ -297,7 +297,7 @@ function createModal(title, promptData = null) {
             <div class="p-8 space-y-6">
                 <div>
                     <label class="text-xs font-bold text-zinc-400 tracking-widest">TIÊU ĐỀ</label>
-                    <input id="modalTitle" value="${p.title || ''}" class="w-full mt-2 bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 text-lg outline-none focus:border-cyan-400">
+                    <input id="modalTitle" class="w-full mt-2 bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 text-lg outline-none focus:border-cyan-400">
                 </div>
                 
                 <div class="grid grid-cols-2 gap-6">
@@ -309,18 +309,31 @@ function createModal(title, promptData = null) {
                     </div>
                     <div>
                         <label class="text-xs font-bold text-zinc-400 tracking-widest">TAGS (phân cách dấu phẩy)</label>
-                        <input id="modalTags" value="${(p.tags || []).join(', ')}" class="w-full mt-2 bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 outline-none">
+                        <input id="modalTags" class="w-full mt-2 bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 outline-none">
                     </div>
                 </div>
                 
+                ${isEdit && p.versions && p.versions.length > 0 ? `
+                <div>
+                    <label class="text-xs font-bold text-zinc-400 tracking-widest">LỊCH SỬ PHIÊN BẢN (Click để xem lại nội dung cũ)</label>
+                    <div class="flex gap-2 mt-2 overflow-x-auto pb-2">
+                        ${p.versions.map((v, i) => {
+                            const vData = encodeURIComponent(JSON.stringify(v));
+                            const time = new Date(v.timestamp).toLocaleString('vi-VN', {hour: '2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'});
+                            return `<button type="button" onclick="restoreVersionFromModal('${vData}')" class="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs whitespace-nowrap border border-zinc-700">🕒 ${time}</button>`;
+                        }).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
                 <div>
                     <label class="text-xs font-bold text-zinc-400 tracking-widest">NỘI DUNG PROMPT</label>
-                    <textarea id="modalContent" rows="10" class="w-full mt-2 bg-zinc-800 border border-zinc-700 rounded-3xl px-5 py-5 font-mono text-sm outline-none focus:border-cyan-400">${p.content || ''}</textarea>
+                    <textarea id="modalContent" rows="10" class="w-full mt-2 bg-zinc-800 border border-zinc-700 rounded-3xl px-5 py-5 font-mono text-sm outline-none focus:border-cyan-400"></textarea>
                 </div>
                 
                 <div>
                     <label class="text-xs font-bold text-zinc-400 tracking-widest">MÔ TẢ (tiếng Việt)</label>
-                    <textarea id="modalDesc" rows="3" class="w-full mt-2 bg-zinc-800 border border-zinc-700 rounded-3xl px-5 py-5">${p.description || ''}</textarea>
+                    <textarea id="modalDesc" rows="3" class="w-full mt-2 bg-zinc-800 border border-zinc-700 rounded-3xl px-5 py-5"></textarea>
                 </div>
             </div>
             
@@ -333,6 +346,14 @@ function createModal(title, promptData = null) {
             </div>
         </div>
     `;
+    
+    // Set values safely to prevent XSS and HTML breaks
+    setTimeout(() => {
+        if (p.title) modal.querySelector('#modalTitle').value = p.title;
+        if (p.tags) modal.querySelector('#modalTags').value = p.tags.join(', ');
+        if (p.content) modal.querySelector('#modalContent').value = p.content;
+        if (p.description) modal.querySelector('#modalDesc').value = p.description;
+    }, 0);
     
     return modal;
 }
@@ -361,6 +382,18 @@ function savePromptFromModal(btn) {
     renderSidebar();
     updateStatsBar();
     showToast(editingId ? 'Đã cập nhật prompt' : 'Đã tạo prompt mới');
+}
+
+function restoreVersionFromModal(encodedData) {
+    try {
+        const v = JSON.parse(decodeURIComponent(encodedData));
+        if (v.title) document.getElementById('modalTitle').value = v.title;
+        if (v.content) document.getElementById('modalContent').value = v.content;
+        if (v.description) document.getElementById('modalDesc').value = v.description;
+        showToast('Đã tải nội dung phiên bản cũ (Chưa lưu)', 'info');
+    } catch(e) {
+        console.error(e);
+    }
 }
 
 function showAddCategoryModal() {
